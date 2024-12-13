@@ -59,7 +59,7 @@ def getmoneycontrolnews( sharename):
         for p in para1:
             para.append(p.text)
     sorted_paragraphs = sorted(para, key=lambda para: count_occurrences(para, sharename), reverse=True)
-    return sorted_paragraphs[:10]
+    return sorted_paragraphs[:5]
 
 
 def count_occurrences(paragraph, target):

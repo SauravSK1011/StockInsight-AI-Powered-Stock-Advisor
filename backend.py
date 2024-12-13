@@ -29,10 +29,10 @@ input_text=st.text_input("Search the Share u want")
 llm=ChatOpenAI(model="gpt-3.5-turbo")
 output_parser=StrOutputParser()
 chain=prompt|llm|output_parser
-news=getmoneycontrolnews(input_text)
-news.append(getnews(input_text))
-
-if input_text and len(news)<=1:
+news=getnews (input_text)
+news.append(getmoneycontrolnews(input_text))
+st.write(news)
+if input_text:
     # st.write(news)
     st.write(chain.invoke({'share':input_text,'news_context':news}))
 else :
