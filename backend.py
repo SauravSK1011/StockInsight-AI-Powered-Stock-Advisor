@@ -171,7 +171,7 @@ if input_text:
         st.markdown(f"[{title}]({url})")
     for title, url in linklist2.items():
         st.markdown(f"[{title}]({url})")
-    st.write("Priduction of StockInsight AI from Latest News")
+    st.write("Predictions of StockInsight AI from Latest News")
     st.write(chain.invoke({'share':input_text,'news_context':news_combined}))
 else :
     st.write("Please try again after some time")
