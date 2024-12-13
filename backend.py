@@ -29,11 +29,20 @@ input_text=st.text_input("Search the Share u want")
 llm=ChatOpenAI(model="gpt-3.5-turbo")
 output_parser=StrOutputParser()
 chain=prompt|llm|output_parser
-news=getnews (input_text)
-news.append(getmoneycontrolnews(input_text))
-st.write(news)
+linklist, news=getnews (input_text)
+linklist2,news2=getmoneycontrolnews(input_text)
+if isinstance(news, list) and isinstance(news2, list):
+    news_combined = news + news2
+    print("news_combined")
+else:
+    news_combined = news
 if input_text:
-    # st.write(news)
-    st.write(chain.invoke({'share':input_text,'news_context':news}))
+    st.write("Latest News Of Shares:-")
+    for title, url in linklist.items():
+        st.markdown(f"[{title}]({url})")
+    for title, url in linklist2.items():
+        st.markdown(f"[{title}]({url})")
+    st.write("Priduction of StockInsight AI from Latest News")
+    st.write(chain.invoke({'share':input_text,'news_context':news_combined}))
 else :
     st.write("Please try again after some time")

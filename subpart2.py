@@ -27,11 +27,13 @@ def getnews( sharename):
     links=list(set(links))
     print(str(len(links))+" links found")
     max_links = links[:5]
-
+    linklist={}
     for link in max_links:
         time.sleep(2)
         prequest= requests.get(link,headers=headers)
         psoup = BeautifulSoup(prequest.text, 'html.parser')
+        hs1=psoup.find("h1")
+        linklist[hs1.text]=link
         headingsh1=psoup.find_all("h1")
         for h1 in headingsh1:
             allheadingsh1.append(h1.text)
@@ -42,7 +44,7 @@ def getnews( sharename):
         for p in para1:
             para.append(p.text)
     sorted_paragraphs = sorted(para, key=lambda para: count_occurrences(para, sharename), reverse=True)
-    return sorted_paragraphs[:10]
+    return linklist, sorted_paragraphs[:10]
 
 
 def count_occurrences(paragraph, target):
