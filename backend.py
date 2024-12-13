@@ -1,182 +1,108 @@
+import streamlit as st
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 import requests
 from bs4 import BeautifulSoup
 import time
-import random
 import urllib.parse
-import requests
-from bs4 import BeautifulSoup
-import time
-import random
-import urllib.parse
-import streamlit as st
 import os
 from dotenv import load_dotenv
 load_dotenv()
 
-
-
+# Function to fetch Moneycontrol News
 def getmoneycontrolnews(sharename):
     if not sharename:
         return []  # Return an empty list if sharename is empty
-    
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-    }
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"}
     encoded_share = urllib.parse.quote(sharename)
     url = f"https://www.google.com/search?q={encoded_share}%20share%20news"
-    print(sharename)
     request = requests.get(url, headers=headers)
     soup = BeautifulSoup(request.text, 'html.parser')
-    soupp = soup.prettify()
-    links = soup.find_all("a")
-    mlink = ""
-    
-    for link in links:
+    links = []
+    for link in soup.find_all("a"):
         href = link.get("href")
         if href and "moneycontrol" in href:
             mlink = href
             break
-    
-    links = []
     mrequest = requests.get(mlink, headers=headers)
     msoup = BeautifulSoup(mrequest.text, 'html.parser')
-    mlinks = msoup.find_all("a")
-    
-    for link in mlinks:
+    for link in msoup.find_all("a"):
         href = link.get("href")
         if href and "news/business" in href:
-            # Ensure sharename is not empty and properly split
-            if sharename.split():
-                if sharename.split()[0].lower() in href.lower():
-                    absolute_url = urllib.parse.urljoin(mlink, href)  # Convert to absolute URL if it's relative
-                    links.append(absolute_url)
+            if sharename.split() and sharename.split()[0].lower() in href.lower():
+                absolute_url = urllib.parse.urljoin(mlink, href)
+                links.append(absolute_url)
+    return list(set(links))
 
-    allheadingsh1 = []
-    allheadingsh2 = []
-    para = []
-
-    links = list(set(links))
-    print(str(len(links)) + " links found")
-    max_links = links[:5]
-    linklist={}
-
-    for link in max_links:
-        time.sleep(2)
-        prequest = requests.get(link, headers=headers)
-        psoup = BeautifulSoup(prequest.text, 'html.parser')
-        hs1=psoup.find("h1")
-        linklist[hs1.text]=link
-
-        headingsh1 = psoup.find_all("h1")
-        for h1 in headingsh1:
-            allheadingsh1.append(h1.text)
-        
-        headingsh2 = psoup.find_all("h2")
-        for h2 in headingsh2:
-            allheadingsh2.append(h2.text)
-        
-        para1 = psoup.find_all("p")
-        for p in para1:
-            para.append(p.text)
-
-    sorted_paragraphs = sorted(para, key=lambda para: count_occurrences(para, sharename), reverse=True)
-    return linklist,sorted_paragraphs[:5]
-
-def count_occurrences(paragraph, target):
-    return paragraph.lower().count(target.lower())
-
-
-
-
-def getnews( sharename):
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-    }
+# Function to fetch News
+def getnews(sharename):
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"}
     encoded_share = urllib.parse.quote(sharename)
     url = f"https://www.google.com/search?q={encoded_share}%20news"
-    print(sharename)
-    request= requests.get(url,headers=headers)
+    request = requests.get(url, headers=headers)
     soup = BeautifulSoup(request.text, 'html.parser')
-    soupp=soup.prettify()
-    news=soup.find_all("div",class_="m7jPZ")
-    links=[]
-    for n in news:
-     if sharename in n.text.lower():
-        link=n.find("a",class_="WlydOe")
-        links.append(link.get("href"))
-    allheadingsh1=[]
-    allheadingsh2=[]
-    para=[]
+    news = soup.find_all("div", class_="m7jPZ")
+    links = [n.find("a", class_="WlydOe").get("href") for n in news if sharename.lower() in n.text.lower()]
+    return list(set(links))
 
-    links=list(set(links))
-    print(str(len(links))+" links found")
-    max_links = links[:5]
-    linklist={}
-    for link in max_links:
-        time.sleep(2)
-        prequest= requests.get(link,headers=headers)
-        psoup = BeautifulSoup(prequest.text, 'html.parser')
-        hs1=psoup.find("h1")
-        linklist[hs1.text]=link
-        headingsh1=psoup.find_all("h1")
-        for h1 in headingsh1:
-            allheadingsh1.append(h1.text)
-        headingsh2=psoup.find_all("h2")
-        for h2 in headingsh2:
-            allheadingsh2.append(h1.text)
-        para1=psoup.find_all("p")
-        for p in para1:
-            para.append(p.text)
-    sorted_paragraphs = sorted(para, key=lambda para: count_occurrences(para, sharename), reverse=True)
-    return linklist, sorted_paragraphs[:10]
+# Langchain OpenAI setup
+os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
+os.environ["LANGCHAIN_TRACING_V2"] = "true"
+os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANGCHAIN_API_KEY")
 
-
-def count_occurrences(paragraph, target):
-    return paragraph.lower().count(target.lower())
-
-os.environ["OPENAI_API_KEY"]=os.getenv("OPENAI_API_KEY")
-## Langmith tracking
-os.environ["LANGCHAIN_TRACING_V2"]="true"
-os.environ["LANGCHAIN_API_KEY"]=os.getenv("LANGCHAIN_API_KEY")
-
-prompt=ChatPromptTemplate.from_messages(
-    [
-        ("system","User will give latest news share now answer in 50 words that should its time to buy {share} or sell {share} dont answer hold"),
-        ("user","Share news :{news_context}")
-    ]
+prompt = ChatPromptTemplate.from_messages(
+    [("system", "User will give latest news share now answer in 50 words that should its time to buy {share} or sell {share} dont answer hold"),
+     ("user", "Share news :{news_context}")]
 )
 
-## streamlit framework
-
+# Streamlit UI
+st.set_page_config(page_title="StockInsight AI Advisor", layout="wide")
 st.title('StockInsight – AI-Powered Stock Advisor')
-input_text=st.text_input("Search the Share u want")
+st.markdown("""
+Welcome to StockInsight, your go-to platform for AI-powered stock predictions based on the latest news. Enter the stock name to get news and AI predictions.
+""")
 
-# openAI LLm 
-llm=ChatOpenAI(model="gpt-3.5-turbo")
-output_parser=StrOutputParser()
-chain=prompt|llm|output_parser
-linklist, news=getnews (input_text)
-linklist2,news2=getmoneycontrolnews(input_text)
-if isinstance(news, list) and isinstance(news2, list):
-    news_combined = news + news2
-    print("news_combined")
-else:
-    news_combined = news
+# Input for stock share name
+input_text = st.text_input("Search the Share you want", "")
+
+# OpenAI LLM setup
+llm = ChatOpenAI(model="gpt-3.5-turbo")
+output_parser = StrOutputParser()
+chain = prompt | llm | output_parser
+
 if input_text:
-    st.write("Latest News Of Shares:-")
-    for title, url in linklist.items():
-        st.markdown(f"[{title}]({url})")
-    for title, url in linklist2.items():
-        st.markdown(f"[{title}]({url})")
-    st.write("Predictions of StockInsight AI from Latest News")
-    st.write(chain.invoke({'share':input_text,'news_context':news_combined}))
-else :
-    st.write("Please try again after some time")
-    
-    
-    
-    
+    # Get news from multiple sources
+    linklist = getnews(input_text)
+    linklist2 = getmoneycontrolnews(input_text)
+    news_combined = linklist + linklist2
 
+    # Display the latest news in cards
+    st.subheader("Latest News of the Share")
+    
+    # Create a container for news cards
+    news_container = st.container()
+    with news_container:
+        # Create a 2-column layout for cards
+        cols = st.columns(2)
+
+        # Loop through the links and display them in cards
+        for i, link in enumerate(linklist + linklist2):
+            col = cols[i % 2]  # Alternate columns
+            with col:
+                # Fetch the title of the news article
+                news_title = link.split("/")[-1].replace("-", " ").title()
+                # Display the news in a card-like format
+                st.markdown(f"""
+                <div style="background-color:#f1f1f1;padding:10px;border-radius:8px;margin-bottom:10px;">
+                    <h5><a href="{link}" target="_blank" style="color:#1a73e8;text-decoration:none;">{news_title}</a></h5>
+                    <p><a href="{link}" target="_blank" style="color:#1a73e8;text-decoration:none;">Read More</a></p>
+                </div>
+                """, unsafe_allow_html=True)
+
+    # Display AI predictions
+    st.subheader("Predictions from StockInsight AI")
+    prediction = chain.invoke({'share': input_text, 'news_context': news_combined})
+    st.write(prediction)
+else:
+    st.write("Please enter a stock name to get predictions.")
