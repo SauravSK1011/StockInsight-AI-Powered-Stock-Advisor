@@ -2,3 +2,4 @@
 base = "/"  # This is the root directory of your repository
 command = "pip3 install -r requirements.txt && streamlit run backend.py"
 publish = "/"  # This can be set to `/` or the directory where you want to output built files (if applicable)
+
