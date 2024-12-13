@@ -54,7 +54,7 @@ def getmoneycontrolnews( sharename):
             allheadingsh1.append(h1.text)
         headingsh2=psoup.find_all("h2")
         for h2 in headingsh2:
-            allheadingsh2.append(h1.text)
+            allheadingsh2.append(h2.text)
         para1=psoup.find_all("p")
         for p in para1:
             para.append(p.text)
